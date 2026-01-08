@@ -27,6 +27,7 @@ class SecurityConfig {
     @Bean
     fun securityFilterChain(http: HttpSecurity, jwtFilter: JwtFilter): SecurityFilterChain {
         http.csrf { it.disable() }
+            .cors { }
             .authorizeHttpRequests {
                 it.requestMatchers("/user/register", "/user/login").permitAll()
                 it.anyRequest().authenticated()
