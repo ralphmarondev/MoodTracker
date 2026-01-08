@@ -7,6 +7,7 @@ import {useRouter} from 'vue-router'
 const authStore = useAuthStore()
 const router = useRouter()
 
+const fullName = ref('')
 const username = ref('')
 const password = ref('')
 const isError = ref(false)
@@ -16,7 +17,7 @@ const message = ref('')
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
-const login = async () => {
+const register = async () => {
 	if (isLoading.value) return
 	
 	isLoading.value = true
@@ -24,41 +25,57 @@ const login = async () => {
 	isError.value = false
 	
 	try {
-		const [response] = await Promise.all([axiosInstance.post('/user/login', {
+		await axiosInstance.post('/user/register', {
+			fullName: fullName.value.trim(),
 			username: username.value.trim(),
 			password: password.value.trim(),
-		}),
-			delay(2000)
-		])
+		})
+		
+		await delay(2000)
+		
+		const response = await axiosInstance.post('/user/login', {
+			username: username.value.trim(),
+			password: password.value.trim(),
+		})
 		
 		const {accessToken, refreshToken} = response.data
 		authStore.setTokens(accessToken, refreshToken)
 		
 		isError.value = false
-		message.value = 'Login successful!'
+		message.value = `${fullName.value} registered successfully!`
 		showMessage.value = true
 	} catch (error: any) {
 		isError.value = true
-		message.value = error?.response?.data?.message || 'Invalid credentials.'
+		message.value = error?.response?.data?.message || 'Registration failed.'
 		showMessage.value = true
 	} finally {
 		isLoading.value = false
 	}
 }
 
-const register = () => {
-	router.push({name: 'register'})
+const login = () => {
+	router.push({name: 'login'})
 }
 </script>
 
 <template>
 	<main class="h-screen w-screen flex items-center justify-center">
 		<form
-				@submit.prevent="login"
+				@submit.prevent="register"
 				class="rounded-lg p-8 border-1 border-pink-700 min-w-[400px]">
 			
-			<h3 class="text-2xl text-pink-500">Mood Tracker</h3>
-			<p class="mb-5 text-md text-gray-500">What's your mood today?</p>
+			<h3 class="text-2xl text-pink-500">Create Account</h3>
+			<p class="mb-5 text-md text-gray-500">Track your mood. Are you cute?</p>
+			
+			<div class="flex flex-col mb-3">
+				<label for="fullName" class="mb-1 text-gray-700">Full Name:</label>
+				<input type="text"
+				       v-model="fullName"
+				       name="fullName"
+				       placeholder="Enter your name"
+				       class="border border-pink-300 bg-pink-100 py-2 px-4 rounded-lg focus:outline-none focus:ring-2
+				            focus:ring-pink-400 focus:border-pink-500 transition-all duration-200">
+			</div>
 			
 			<div class="flex flex-col mb-3">
 				<label for="username" class="mb-1 text-gray-700">Username:</label>
@@ -96,15 +113,15 @@ const register = () => {
 			        cursor-pointer mb-3 mt-3 flex items-center justify-center gap-2">
 				<span v-if="isLoading"
 				      class="w-5 h-5 border-2 border-t-2 border-white border-t-transparent rounded-full animate-spin"></span>
-				{{ isLoading ? 'Logging in...' : 'Login' }}
+				{{ isLoading ? 'Registering...' : 'Register' }}
 			</button>
 			
 			<button
-					@click="register"
+					@click="login"
 					type="button"
 					class="w-full bg-pink-50 hover:bg-pink-100 text-pink-500 hover:text-pink-600 text-lg py-2 px-4 rounded-lg
 			        cursor-pointer mb-2">
-				Create New Account
+				Already Have an Account
 			</button>
 		</form>
 	</main>
